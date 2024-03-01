@@ -1,4 +1,4 @@
-module github.com/pwh-pwh/aiwechat-vercel
+module github.com/cubarco/aiwechat-vercel
 
 go 1.21
 
