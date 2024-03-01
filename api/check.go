@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"github.com/pwh-pwh/aiwechat-vercel/config"
+	"github.com/cubarco/aiwechat-vercel/config"
 	"net/http"
 )
 
