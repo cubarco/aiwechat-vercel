@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"github.com/pwh-pwh/aiwechat-vercel/chat"
+	"github.com/cubarco/aiwechat-vercel/chat"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
