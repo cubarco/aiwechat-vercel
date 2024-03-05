@@ -43,25 +43,7 @@ func WithTimeChat(userID, msg string, f func(userID, msg string) string) string 
 	}
 	resChan := make(chan string)
 	go func() {
-<<<<<<< HEAD
-		resp, err := client.CreateChatCompletion(context.Background(),
-			openai.ChatCompletionRequest{
-				Model: openai.GPT4,
-				Messages: []openai.ChatCompletionMessage{
-					{
-						Role:    openai.ChatMessageRoleUser,
-						Content: msg,
-					},
-				},
-			})
-		if err != nil {
-			resChan <- err.Error()
-			return
-		}
-		resChan <- resp.Choices[0].Message.Content
-=======
 		resChan <- f(userID, msg)
->>>>>>> upstream/master
 	}()
 	select {
 	case res := <-resChan:
