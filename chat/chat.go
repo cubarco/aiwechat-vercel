@@ -1,48 +1,49 @@
 package chat
 
 import (
-	"context"
 	"github.com/cubarco/aiwechat-vercel/config"
-	"github.com/sashabaranov/go-openai"
+	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"os"
 	"time"
 )
 
 type BaseChat interface {
 	Chat(userID string, msg string) string
+	HandleMediaMsg(msg *message.MixMessage) string
+}
+type SimpleChat struct {
 }
 
-type ErrorChat struct {
-	errMsg string
+func (s SimpleChat) Chat(userID string, msg string) string {
+	panic("implement me")
 }
 
-func (e *ErrorChat) Chat(userID string, msg string) string {
-	return e.errMsg
+func (s SimpleChat) HandleMediaMsg(msg *message.MixMessage) string {
+	switch msg.MsgType {
+	case message.MsgTypeImage:
+		return msg.PicURL
+	case message.MsgTypeEvent:
+		if msg.Event == message.EventSubscribe {
+			return "哇，又有帅哥美女关注我啦😄"
+		} else {
+			return "不支持的类型"
+		}
+	default:
+		return "未支持的类型"
+	}
 }
 
-type Echo struct{}
-
-func (e *Echo) Chat(userID string, msg string) string {
-	return msg
-}
-
-type SimpleGptChat struct {
-	token string
-	url   string
-}
-
-func (s *SimpleGptChat) Chat(userID string, msg string) string {
+// 加入超时控制
+func WithTimeChat(userID, msg string, f func(userID, msg string) string) string {
 	if _, ok := config.Cache.Load(userID); ok {
 		rAny, _ := config.Cache.Load(userID)
 		r := rAny.(string)
 		config.Cache.Delete(userID)
 		return r
 	}
-	cfg := openai.DefaultConfig(s.token)
-	cfg.BaseURL = s.url
-	client := openai.NewClientWithConfig(cfg)
 	resChan := make(chan string)
 	go func() {
+<<<<<<< HEAD
 		resp, err := client.CreateChatCompletion(context.Background(),
 			openai.ChatCompletionRequest{
 				Model: openai.GPT4,
@@ -58,8 +59,10 @@ func (s *SimpleGptChat) Chat(userID string, msg string) string {
 			return
 		}
 		resChan <- resp.Choices[0].Message.Content
+=======
+		resChan <- f(userID, msg)
+>>>>>>> upstream/master
 	}()
-
 	select {
 	case res := <-resChan:
 		return res
@@ -69,26 +72,43 @@ func (s *SimpleGptChat) Chat(userID string, msg string) string {
 	}
 }
 
+type ErrorChat struct {
+	errMsg string
+}
+
+func (e *ErrorChat) HandleMediaMsg(msg *message.MixMessage) string {
+	return e.errMsg
+}
+
+func (e *ErrorChat) Chat(userID string, msg string) string {
+	return e.errMsg
+}
+
 func GetChatBot() BaseChat {
-	err := config.CheckConfig()
+	botType, err := config.CheckBotConfig()
 	if err != nil {
 		return &ErrorChat{
 			errMsg: err.Error(),
 		}
 	}
-	useType := config.UseType
-	switch useType {
-	case config.GPT:
+
+	switch botType {
+	case config.Bot_Type_Gpt:
 		url := os.Getenv("GPT_URL")
 		if url == "" {
 			url = "https://api.openai.com/v1/"
 		}
 		return &SimpleGptChat{
-			token: os.Getenv("GPT_TOKEN"),
-			url:   url,
+			token:      os.Getenv("GPT_TOKEN"),
+			url:        url,
+			SimpleChat: SimpleChat{},
 		}
-	case config.ECHO:
+	case config.Bot_Type_Spark:
+		return &SparkChat{
+			SimpleChat{},
+		}
+	default:
 		return &Echo{}
 	}
-	return &Echo{}
+
 }
